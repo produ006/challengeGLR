@@ -1,0 +1,97 @@
+<html lang="fr">
+    <head>
+        <title> challenge GLR </title>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <h2> get the userID of a player with its username </h2>
+        <form id="UsernameIdOfPlayer" method="POST">
+            <label> username / id of the player </label>
+            <input name="username" id="username" type="text" required>
+            <input type="submit" value="submit">
+        </form>
+        
+        <div id="infos"></div>
+        <div id="friendlistdiv"></div>
+        
+
+        <script>
+            $(document).ready(function() {
+                var friends = []
+
+                $("#UsernameIdOfPlayer").submit(function(event){
+                    event.preventDefault()
+                    getUserInfo()
+                })
+
+                $("body").on('click', '#showfriend', function(event){
+                    event.preventDefault()
+                    $("#friendlistdiv").html('<h2> friend list </h2>')
+                    showfriend()
+                })
+
+                function getUserInfo(){
+                    $("#infos").text('loading infos ...')
+                    $("#friendlistdiv").text('')
+
+                    var username = $("#username").val()
+                    $("#username").val('')
+                    $.post("/allinfo", {uName : username}, function(data){
+                        $("#infos").text('')
+                        if (data.error === "userNotFound")
+                            $("#infos").append("<span> profile not found </span>")
+                        else {
+                            if (data.userID)
+                                $("#infos").append("<b> the user id is : " + data.userID + '</b><br>')
+                            if (data.userName)
+                                $("#infos").append("<b> the username is : " + data.userName + '</b><br>')
+                            $("#infos").append('<span> this player is a <b>' + data.role + '</b></span><br><br>')
+                            if (data.friends === 'noFriend')
+                                $("#infos").append('<span> this player has <b> 0 </b> friend </span><br>')
+                            else {
+                                friends = data.friends
+                                friends = friends.split(', ')
+                                $("#infos").append('<span> this player has <b>' + friends.length + ' </b>friends </span>')
+                                $("#infos").append('<button id="showfriend"> show all friends </button><br>')
+                            }
+                            if (data.inRequest === 'noInRequest')
+                                    $("#infos").append("<span> this player don't have any incomming request </span><br>")
+                            else {
+                                var temp = data.inRequest
+                                var nInRequest = temp.split(',').length
+                                if (nInRequest > 1)
+                                    $("#infos").append('<span> this player has <b>' + nInRequest + ' </b>pending incoming requests </span><br>')
+                                else
+                                    $("#infos").append('<span> this player has <b>' + nInRequest + ' </b>pending incoming request </span><br>')
+                            }
+                            if (data.outRequest === 'noOutRequest')
+                                $("#infos").append("<span> this player don't have any outgoing request </span><br>")
+                            else {
+                                var temp2 = data.outRequest
+                                var nOutRequest = temp2.split(',').length
+                                if (nOutRequest > 1)
+                                    $("#infos").append('<span> this player has <b>' + nOutRequest + ' </b>pending outgoing requests </span><br>')
+                                else
+                                    $("#infos").append('<span> this player has <b>' + nOutRequest + ' </b>pending outgoing request </span><br>')
+                            }
+                            $("#infos").append('<br>')
+                            $("#infos").append('<span> account created on ' + data.createdAt +'</span><br>')
+                            $("#infos").append('<span> click on the picture to go to the profile page </span> <br>')
+                            $("#infos").append('<a href="' + data.profileLink +'" target="_blank"><img alt="profile picture" src="' + data.pfp + '" width=400 height=400></a>')
+                        }
+                        
+                    })
+                }
+                function showfriend() {
+                    $("#friendlistdiv").append('<ul id="friendl"></ul>')
+                        friends.forEach(friend => {
+                            friend = friend.split('-')
+                            console.log(friend)
+                            $("#friendl").append('<li><a  id="friendName" href="https://galaxylifereborn.com/profile/' + friend[0] + '" target="_blank">' + friend[0] + '</a></li>')
+                        });
+                }
+            })
+            
+        </script>
+    </body>
+</html>
